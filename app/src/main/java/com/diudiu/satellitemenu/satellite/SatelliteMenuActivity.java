@@ -11,7 +11,6 @@ import com.diudiu.satellitemenu.satellite.view.ArcMenu;
 public class SatelliteMenuActivity extends Activity implements View.OnClickListener {
 
     private ArcMenu arcMenu;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
