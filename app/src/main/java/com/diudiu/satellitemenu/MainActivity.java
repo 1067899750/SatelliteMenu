@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
+import com.diudiu.satellitemenu.bottonSatellite.BottomStatelliteMenuActivity;
 import com.diudiu.satellitemenu.satellite.SatelliteMenuActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -19,6 +20,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initView() {
         findViewById(R.id.btn_satellite_menu).setOnClickListener(this);
+        findViewById(R.id.btn_bottom_satellite_menu).setOnClickListener(this);
     }
 
     @Override
@@ -27,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_satellite_menu:
                 startActivity(new Intent(this, SatelliteMenuActivity.class));
                 break;
+            case R.id.btn_bottom_satellite_menu:
+                startActivity(new Intent(this,BottomStatelliteMenuActivity.class));
         }
     }
 }

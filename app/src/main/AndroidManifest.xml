@@ -21,6 +21,9 @@
         <activity
             android:name=".satellite.SatelliteMenuActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".bottonSatellite.BottomStatelliteMenuActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
