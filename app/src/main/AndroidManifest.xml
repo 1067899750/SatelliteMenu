@@ -24,6 +24,8 @@
         <activity
             android:name=".bottonSatellite.BottomStatelliteMenuActivity"
             android:screenOrientation="portrait" />
+        <activity android:name=".lockPattern.LockPatternActivity"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>

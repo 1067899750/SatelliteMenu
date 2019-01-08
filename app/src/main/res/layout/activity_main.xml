@@ -16,4 +16,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="底部星级菜单" />
+
+    <Button
+        android:id="@+id/btnLuck"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="图案解锁" />
 </LinearLayout>
