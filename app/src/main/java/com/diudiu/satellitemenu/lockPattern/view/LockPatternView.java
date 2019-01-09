@@ -4,8 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -37,6 +40,8 @@ public class LockPatternView extends View {
      * 移动的X和Y
      */
     private float movingX, movingY;
+    private boolean isMoveButNotPoint;
+    private Matrix matrix = new Matrix();
 
     /**
      * 点
@@ -79,6 +84,44 @@ public class LockPatternView extends View {
             initPoints();
         }
         points2Canvas(canvas);
+
+        if (pointList.size() > 0) {
+            Point startPoint = pointList.get(0);
+            //绘制九宫格坐标里的点
+            for (int i = 0; i < pointList.size(); i++) {
+                Point endPoint = pointList.get(i);
+                lineToCanvas(canvas, startPoint, endPoint);
+                startPoint = endPoint;
+            }
+            //绘制九宫格坐标以外的点
+            if (isMoveButNotPoint) {
+                lineToCanvas(canvas, startPoint, new Point(movingX, movingY));
+            }
+        }
+    }
+
+    /**
+     * 将线绘制到画布上
+     *
+     * @param canvas     画布
+     * @param startPoint 开始的点
+     * @param endPoint   结束的点
+     */
+    private void lineToCanvas(Canvas canvas, Point startPoint, Point endPoint) {
+        float lineLength = (float) twoPointDistance(startPoint, endPoint);
+        float degree = getDegrees(startPoint, endPoint);
+        canvas.rotate(degree, startPoint.x, startPoint.y);  //旋转
+        if (startPoint.state == Point.STATE_PRESSED) {  //按下的状态
+            //设置线的缩放比例,在这里线是往一个方向缩放的,即x轴,我们只需要设置x轴的缩放比例即可,y轴默认为1
+            matrix.setScale(lineLength / linePressed.getWidth(), 1);
+            matrix.postTranslate(startPoint.x - linePressed.getWidth() / 2, startPoint.y - linePressed.getHeight() / 2);
+            canvas.drawBitmap(linePressed, matrix, paint);
+        } else {   //错误的状态
+            matrix.setScale(lineLength / lineError.getWidth(), 1);
+            matrix.postTranslate(startPoint.x - lineError.getWidth() / 2, startPoint.y - lineError.getHeight() / 2);
+            canvas.drawBitmap(lineError, matrix, paint);
+        }
+        canvas.rotate(-degree, startPoint.x, startPoint.y);  //把旋转的角度转回来
     }
 
     /**
@@ -105,7 +148,7 @@ public class LockPatternView extends View {
      * 初始化点
      */
     private void initPoints() {
-//1.获取布局宽高
+        //1.获取布局宽高
         width = getWidth();
         height = getHeight();
 
@@ -138,16 +181,32 @@ public class LockPatternView extends View {
         points[2][2] = new Point((offsetsX + width - width / 4), (offssetsY + width - width / 4));
 
         mPointRadius = pointNormal.getWidth() / 2;
+
+        // 设置密码
+        int index = 1;
+        for (int i = 0; i < points.length; i++) {
+            for (int j = 0; j < points[i].length; j++) {
+                points[i][j].index = index;
+                index++;
+            }
+        }
+        isInit = true;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         movingX = event.getX();
         movingY = event.getY();
+        isMoveButNotPoint = false;
+        isFinish = false;
 
         Point point = null;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                //重新绘制
+                if (onPatterChangeListener != null) {
+                    onPatterChangeListener.onPatterStart(true);
+                }
                 resetPoint();
                 point = checkSelectPoint();
                 if (point != null) {
@@ -157,6 +216,7 @@ public class LockPatternView extends View {
             case MotionEvent.ACTION_MOVE:
                 if (isSelected) {
                     point = checkSelectPoint();
+                    isMoveButNotPoint = true;
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -166,25 +226,72 @@ public class LockPatternView extends View {
         }
         //选中重复检查
         if (!isFinish && isSelected && point != null) {
-
+            if (checkCrossPoint(point)) {  //交叉点
+                isMoveButNotPoint = true;
+            } else {   //非交叉点(新的点)
+                point.state = Point.STATE_PRESSED;
+                pointList.add(point);
+            }
         }
         //绘制结束
         if (isFinish) {
             if (pointList.size() == 1) {//绘制不成立
-                pointList.clear();
-            } else if (pointList.size() < pointSize && pointList.size() > 2) {//绘制错误
-
+                resetPoint();
+            } else if (pointList.size() < pointSize && pointList.size() >= 2) {//绘制错误
+                errPoint();
+                if (onPatterChangeListener != null) {
+                    onPatterChangeListener.onPatterChange(null);
+                }
+                onResultRest();
+            } else {//绘制成功
+                if (onPatterChangeListener != null) {
+                    String passwordStr = "";
+                    for (int i = 0; i < pointList.size(); i++) {
+                        passwordStr = passwordStr + pointList.get(i).index;
+                    }
+                    if (!TextUtils.isEmpty(passwordStr)) {
+                        onPatterChangeListener.onPatterChange(passwordStr);
+                    }
+                }
+                onResultRest();
             }
         }
         postInvalidate();
         return true;
     }
 
+    private void onResultRest() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                resetPoint();
+                postInvalidate();
+            }
+        }, 1000);
+    }
+
+    /**
+     * 检查交叉点
+     *
+     * @param point 点
+     * @return 是否交叉
+     */
+    private boolean checkCrossPoint(Point point) {
+        if (pointList.contains(point)) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * 重置
      */
     public void resetPoint() {
-
+        //将点的状态还原
+        for (Point point : pointList) {
+            point.state = Point.STATE_NORMAL;
+        }
+        pointList.clear();
     }
 
     /**
@@ -225,5 +332,48 @@ public class LockPatternView extends View {
      */
     private static boolean with(float poinX, float pointY, float r, float movingX, float movingY) {
         return Math.sqrt((poinX - movingX) * (poinX - movingX) + (pointY - movingY) * (pointY - movingY)) < r;
+    }
+
+    /**
+     * 获取角度
+     *
+     * @param pointA 第一个点
+     * @param pointB 第二个点
+     * @return
+     */
+    public static float getDegrees(Point pointA, Point pointB) {
+        return (float) Math.toDegrees(Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x));
+    }
+
+    /**
+     * 两点之间的距离
+     *
+     * @param a 第一个点
+     * @param b 第二个点
+     * @return 距离
+     */
+    public static double twoPointDistance(Point a, Point b) {
+        //x轴差的平方加上y轴的平方,然后取平方根
+        return Math.sqrt(Math.abs(a.x - b.x) * Math.abs(a.x - b.x) + Math.abs(a.y - b.y) * Math.abs(a.y - b.y));
+    }
+
+    /**
+     * 图案监听器
+     */
+    public interface OnPatterChangeListener {
+        void onPatterChange(String passwordStr);
+
+        /**
+         * 图案重新绘制
+         *
+         * @param isStart
+         */
+        void onPatterStart(boolean isStart);
+    }
+
+    private OnPatterChangeListener onPatterChangeListener;
+
+    public void setOnPatterChangeListener(OnPatterChangeListener onPatterChangeListener) {
+        this.onPatterChangeListener = onPatterChangeListener;
     }
 }
