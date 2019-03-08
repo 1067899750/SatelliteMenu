@@ -89,6 +89,14 @@ public class PasswordEditText extends EditText {
         drawDivider(canvas);
         //绘制密码
         drawPassword(canvas);
+
+        //判断密码是否满
+        String password = getText().toString().trim();
+        if (!TextUtils.isEmpty(password) && password.length()>=mPasswordNumber) {
+            if (mListener!=null) {
+                mListener.onPasswordFull(password);
+            }
+        }
     }
 
     private void drawPassword(Canvas canvas) {
@@ -141,7 +149,13 @@ public class PasswordEditText extends EditText {
         setText(currentNumbr);
     }
 
-    public int getmPasswordNumber() {
-        return mPasswordNumber;
+    public interface PasswordOnFullListener {
+        void onPasswordFull(String number);
+    }
+
+    private PasswordOnFullListener mListener;
+
+    public void setmListener(PasswordOnFullListener mListener) {
+        this.mListener = mListener;
     }
 }

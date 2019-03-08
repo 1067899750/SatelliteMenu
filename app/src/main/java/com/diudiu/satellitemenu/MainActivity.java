@@ -7,10 +7,12 @@ import android.view.View;
 
 import com.diudiu.satellitemenu.bottonSatellite.BottomStatelliteMenuActivity;
 import com.diudiu.satellitemenu.lockPattern.LockPatternActivity;
-import com.diudiu.satellitemenu.password.PayActivity;
+import com.diudiu.satellitemenu.password.PayDialog;
 import com.diudiu.satellitemenu.satellite.SatelliteMenuActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private PayDialog payDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,6 +20,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         initView();
+        payDialog = new PayDialog(this);
     }
 
     private void initView() {
@@ -40,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(new Intent(this,LockPatternActivity.class));
                 break;
             case R.id.btnPayPassword:
-                startActivity(new Intent(this,PayActivity.class));
+                payDialog.show();
                 break;
         }
     }

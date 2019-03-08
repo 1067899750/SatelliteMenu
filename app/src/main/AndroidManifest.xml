@@ -26,7 +26,6 @@
             android:screenOrientation="portrait" />
         <activity android:name=".lockPattern.LockPatternActivity"
             android:screenOrientation="portrait"/>
-        <activity android:name=".password.PayActivity" />
     </application>
 
 </manifest>
