@@ -7,6 +7,7 @@ import android.view.View;
 
 import com.diudiu.satellitemenu.bottonSatellite.BottomStatelliteMenuActivity;
 import com.diudiu.satellitemenu.lockPattern.LockPatternActivity;
+import com.diudiu.satellitemenu.password.PayActivity;
 import com.diudiu.satellitemenu.satellite.SatelliteMenuActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -23,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_satellite_menu).setOnClickListener(this);
         findViewById(R.id.btn_bottom_satellite_menu).setOnClickListener(this);
         findViewById(R.id.btnLuck).setOnClickListener(this);
+        findViewById(R.id.btnPayPassword).setOnClickListener(this);
     }
 
     @Override
@@ -36,6 +38,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btnLuck:
                 startActivity(new Intent(this,LockPatternActivity.class));
+                break;
+            case R.id.btnPayPassword:
+                startActivity(new Intent(this,PayActivity.class));
                 break;
         }
     }
